@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile</title>
+    <link rel="stylesheet" href="/Css/reset.css" />
+    <link rel="stylesheet" href="/Css/fonts.css" />
+    <link rel="stylesheet" href="/Css/style_mani-page.css" />
+  </head>
+  <body>
+    <div class="sidebar">
+      <h1 class="logo">LOGO</h1>
+      <ul class="menu">
+        <a href="#">Главная</a>
+        <a href="#">Профиль</a>
+        <a href="#">Настройки</a>
+      </ul>
+      <div class="help-and-exit">
+        <a class="help" href="#">Помощь</a>
+        <a class="exit" href="/Html/welcom-back.html">Выход</a>
+      </div>
+    </div>
+
+    <container class="content">
+      <header class="header">
+        <form class="search-header">
+          <input placeholder="Search..." type="text" />
+          <button class="button">
+            <img class="img-search" src="/img/search.svg" />
+          </button>
+        </form>
+        <button class="user-profile" id="openPopupBtn">
+          <img src="/img/user-svgrepo-com 1.svg" alt="" />
+        </button>
+
+        <div class="overlay" id="overlay"></div>
+        <div class="popup" id="popup">
+          <div class="popup-header">
+            <h2>Информация о пользователе:</h2>
+            <span class="close-btn" id="closePopupBtn">&times;</span>
+          </div>
+          <div class="popup-content">
+            <!-- <img src="https://via.placeholder.com/100" alt="User Image" class="user-image"> -->
+            <p><strong>Имя:</strong> <span id="userName"></span></p>
+            <p>
+              <strong>Дата рождения:</strong> <span id="userBirthday"></span>
+            </p>
+            <p><strong>Пол:</strong> <span id="userGender"></span></p>
+          </div>
+        </div>
+      </header>
+
+      <container class="container-main">
+        <form class="indicatorForm1" id="indicatorForm">
+          <label class="indicator" for="indicator">Индикатор:</label>
+          <select
+            id="indicator"
+            class="indicatorSelect"
+            name="indicator"
+            required
+          ></select>
+          <br /><br />
+
+          <label for="value">Значение:</label>
+          <input
+            class="numberNumber"
+            type="text"
+            id="value"
+            name="value"
+            required
+          />
+          <br /><br />
+          <label for="date">Дата:</label>
+          <input class="dateInput" type="date" id="date" name="date" required />
+          <br /><br />
+
+          <button class="btnIndicator" type="submit">Отправить</button>
+        </form>
+
+        <div class="table-container">
+          <div class="grid-container" id="dataGrid"></div>
+        </div>
+        <div class="pagination" id="pagination"></div>
+        <div id="table-popup" class="table-popup">
+          <div class="table-popup-content">
+            <span class="table-close-btn">&times;</span>
+            <p id="popup-text"></p>
+          </div>
+        </div>
+      </container>
+      <container class="container-main" style="height: 600px">
+        <form
+          class="indicatorForm1"
+          id="formDateAnalysis"
+          style="max-width: 400px"
+        >
+          <label for="date">Дата:</label>
+          <input
+            class="dateInput"
+            type="date"
+            id="dateAnaliz"
+            name="date"
+            required
+          />
+          <button class="btnIndicator" style="font-size: 17px" type="submit">
+            Анализ
+          </button>
+        </form>
+        <canvas id="pieChart"></canvas>
+      </container>
+    </container>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const openPopupBtn = document.getElementById("openPopupBtn");
+      const closePopupBtn = document.getElementById("closePopupBtn");
+      const popup = document.getElementById("popup");
+      const overlay = document.getElementById("overlay");
+
+      openPopupBtn.addEventListener("click", () => {
+        popup.style.display = "block";
+        overlay.style.display = "block";
+      });
+
+      closePopupBtn.addEventListener("click", () => {
+        popup.style.display = "none";
+        overlay.style.display = "none";
+      });
+
+      function showPopup(userData) {
+        document.getElementById("userName").innerText = userData.name;
+        document.getElementById("userGender").innerText = userData.gender;
+        document.getElementById("userBirthday").innerText =
+          userData.dateOfBirth;
+      }
+
+      // Закрытие попапа
+      document
+        .getElementById("closePopupBtn")
+        .addEventListener("click", function () {
+          document.getElementById("popup").style.display = "none";
+          document.getElementById("overlay").style.display = "none";
+        });
+
+      // Проверка наличия данных в Local Storage при загрузке страницы
+      const storedUserData = localStorage.getItem("userData");
+      if (storedUserData) {
+        showPopup(JSON.parse(storedUserData));
+      }
+
+      /*-------------вВОДДАННЫХ НА ИНПУТ-------------*/
+
+      const storedData = localStorage.getItem("userDataIdefecators");
+      const indicatorSelect = document.getElementById("indicator");
+      const valueInput = document.getElementById("value");
+
+      if (storedData) {
+        const indicatorData = JSON.parse(storedData);
+
+        // Заполняем выпадающий список
+        indicatorData.forEach((indicator) => {
+          const option = document.createElement("option");
+          option.value = indicator.id; // Используем id как значение
+          option.textContent = indicator.name; // Имя индикатора как текст
+          indicatorSelect.appendChild(option);
+        });
+      } else {
+        console.log("Данные не найдены в Local Storage");
+      }
+
+      /*-----  Сохранение даднный введеных пользователем  -----*/
+
+      const storedFormData = localStorage.getItem("formData");
+      formDataTable = storedFormData ? JSON.parse(storedFormData) : {};
+
+      function renderTable(formDataTable) {
+        console.log("Данные из localStorage:", formDataTable);
+
+        // Преобразуем объект в массив
+        const dataArray = Object.entries(formDataTable).map(
+          ([key, values]) => ({
+            [key]: values,
+          })
+        );
+
+        if (!Array.isArray(dataArray)) {
+          console.error("Ошибка: dataArray должен быть массивом!", dataArray);
+        }
+
+        const maxColumns = 7; // Максимальное количество колонок на странице
+        let currentPage = 0; // Текущая страница
+
+        function createTable() {
+          const dataGrid = document.getElementById("dataGrid");
+          dataGrid.innerHTML = "";
+
+          // Получаем все уникальные даты
+          const allDates = new Set();
+          dataArray.forEach((item) => {
+            Object.values(item)[0].forEach((value) =>
+              allDates.add(value.regDate)
+            );
+          });
+
+          // Сортируем даты
+          const sortedDates = Array.from(allDates).sort();
+          const totalPages = Math.ceil(sortedDates.length / maxColumns);
+
+          // Корректируем текущую страницу, если изменились данные
+          if (currentPage >= totalPages) currentPage = totalPages - 1;
+          if (currentPage < 0) currentPage = 0;
+
+          // Определяем даты для текущей страницы
+          const pageDates = sortedDates.slice(
+            currentPage * maxColumns,
+            (currentPage + 1) * maxColumns
+          );
+
+          // Создаём заголовки
+          const headerRow = document.createElement("div");
+          headerRow.classList.add("grid-header");
+          headerRow.textContent = "Индикатор";
+          dataGrid.appendChild(headerRow);
+
+          pageDates.forEach((date) => {
+            const header = document.createElement("div");
+            header.classList.add("grid-header");
+            header.textContent = date;
+            dataGrid.appendChild(header);
+          });
+
+          // Заполняем таблицу данными
+          dataArray.forEach((item) => {
+            const key = Object.keys(item)[0];
+            const values = item[key];
+
+            const keyCell = document.createElement("div");
+            keyCell.classList.add("grid-item");
+            keyCell.textContent = key;
+            dataGrid.appendChild(keyCell);
+
+            pageDates.forEach((date) => {
+              const value = values.find((v) => v.regDate === date);
+              const valueCell = document.createElement("div");
+              valueCell.classList.add("grid-item");
+
+              if (value) {
+                if (
+                  value.currentValue < value.minValue ||
+                  value.currentValue > value.maxValue
+                ) {
+                  valueCell.classList.add("red");
+                } else {
+                  valueCell.classList.add("green");
+                }
+                valueCell.textContent = value.currentValue;
+
+                const arrow = document.createElement("span");
+                arrow.classList.add("arrow");
+
+                if (value.currentValue < value.minValue) {
+                  arrow.textContent = "↓";
+                  arrow.style.color = "red";
+                } else if (value.currentValue > value.maxValue) {
+                  arrow.textContent = "↑";
+                  arrow.style.color = "red";
+                }
+
+                console.log(value.selectedId);
+                // Добавляем кнопку
+                const infoBtn = document.createElement("button");
+                infoBtn.classList.add("info-btn");
+                infoBtn.textContent = "!";
+                if (valueCell.classList.contains("red")) {
+                  infoBtn.style.backgroundColor = "#dc3545";
+                } else if (valueCell.classList.contains("green")) {
+                  infoBtn.style.backgroundColor = "#ffcc00";
+                  infoBtn.textContent = "?";
+                }
+                infoBtn.addEventListener("click", () => {
+                  openPopup(value);
+                });
+
+                // Добавляем кнопку удаления
+                const deleteBtn = document.createElement("button");
+                deleteBtn.classList.add("delete-btn");
+                deleteBtn.textContent = "×";
+                deleteBtn.style.display = "none"; // Скрываем кнопку по умолчанию
+                deleteBtn.addEventListener("click", (event) => {
+                  event.stopPropagation(); // Останавливаем всплытие события
+                  deleteValue(value.id); // Вызываем функцию удаления
+                });
+
+                // Показываем кнопку удаления при наведении на ячейку
+                valueCell.addEventListener("mouseenter", () => {
+                  deleteBtn.style.display = "block";
+                });
+                valueCell.addEventListener("mouseleave", () => {
+                  deleteBtn.style.display = "none";
+                });
+
+                // Добавляем стрелку и кнопку в ячейку
+                valueCell.appendChild(infoBtn);
+                valueCell.appendChild(arrow);
+                valueCell.appendChild(deleteBtn);
+              } else {
+                valueCell.textContent = "";
+              }
+
+              dataGrid.appendChild(valueCell);
+            });
+          });
+
+          // Рассчитываем ширину контейнера
+          const columnCount = Math.max(pageDates.length, 1) + 1;
+          const columnWidth = 118;
+          const gapWidth = 1;
+          const totalWidth =
+            columnCount * columnWidth + (columnCount - 1) * gapWidth;
+
+          // Применяем ширину к контейнеру
+          const tableContainer = document.querySelector(".table-container");
+          tableContainer.style.maxWidth = `${totalWidth}px`;
+
+          // Создаём пагинацию
+          createPagination(totalPages);
+        }
+
+        function createPagination(totalPages) {
+          const pagination = document.getElementById("pagination");
+          pagination.innerHTML = "";
+
+          for (let i = 0; i < totalPages; i++) {
+            const button = document.createElement("button");
+            button.classList.add("page-btn");
+            if (i === currentPage) button.classList.add("active");
+            button.textContent = i + 1;
+            button.addEventListener("click", () => {
+              currentPage = i;
+              createTable();
+            });
+            pagination.appendChild(button);
+          }
+        }
+        createTable();
+      }
+
+      function openPopup(value) {
+        const popup = document.getElementById("table-popup");
+        const popupText = document.getElementById("popup-text");
+        popupText.innerHTML = `<p> Min: ${value.minValue} Max: ${
+          value.maxValue
+        }</p>
+        Reasons: ${value.reasons.join("</p></p>")}`;
+        popup.style.display = "block";
+
+        // Закрытие попапа
+        const tableСloseBtn = document.querySelector(".table-close-btn");
+        tableСloseBtn.addEventListener("click", () => {
+          popup.style.display = "none";
+        });
+
+        window.addEventListener("click", (event) => {
+          if (event.target === popup) {
+            popup.style.display = "none";
+          }
+        });
+      }
+
+      // Обработчик события для отправки формы
+      document
+        .getElementById("indicatorForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault(); // Отменяем стандартное поведение формы
+
+          // Получаем значения из полей формы
+          const selectedIndicatorId = indicatorSelect.value;
+          const currentValue = valueInput.value;
+          const regDate = document.getElementById("date").value;
+
+          // Создаем объект для сохранения
+          const formData = {
+            selectedId: selectedIndicatorId,
+            currentValue: currentValue,
+            regDate: regDate,
+          };
+
+          indicatorSelect.value = "";
+          valueInput.value = "";
+          document.getElementById("date").value = "";
+          // Сохраняем обновленный массив в Local Storage
+          localStorage.setItem("storedData", JSON.stringify(formData));
+
+          //  ОТОБРАЖЕНИЕ ТАБЛИЦЫ
+
+          /*----------------ОТПРАВКА ВВЕДЕНЫХ ДАННЫХ НА СЕРВЕР----------*/
+
+          const storedPassword = localStorage.getItem("userPassword");
+          const storedData = localStorage.getItem("storedData");
+
+          if (storedData) {
+            // Преобразуем строку JSON обратно в объект
+            const data = JSON.parse(storedData);
+
+            console.log("Данные для отправки:", data);
+
+            // Отправляем данные на сервер
+            axios
+              .post(
+                `http://25.43.232.156:8080/people/${storedPassword}/measures`,
+                data
+              )
+              .then(function (response) {
+                console.log(
+                  "Данные успешно отправлены на сервер:",
+                  response.data
+                );
+                // Удаляем данные из localStorage после успешной отправки
+                axios
+                  .get(
+                    `http://25.43.232.156:8080/people/${storedPassword}/measures`
+                  )
+                  .then(function (response) {
+                    localStorage.setItem(
+                      "formData",
+                      JSON.stringify(response.data)
+                    ); // Сохранение новых данных
+
+                    console.log(
+                      "Полученные данные через ТЕТ 3 секунды:",
+                      response.data
+                    );
+                    const updatedFormData = JSON.parse(
+                      localStorage.getItem("formData")
+                    );
+                    renderTable(updatedFormData); // Вызываем функцию для отрисовки таблицы
+                  })
+                  .catch(function (error) {
+                    console.error("Ошибка при получении данных:", error);
+                  });
+              })
+              .catch(function (error) {
+                console.error("Ошибка при отправке данных:", error);
+              });
+          } else {
+            console.log("Нет данных для отправки.");
+          }
+        });
+
+      document.addEventListener("DOMContentLoaded", function () {
+        const storedFormData = localStorage.getItem("formData");
+        const formDataTable = storedFormData ? JSON.parse(storedFormData) : {};
+
+        if (Object.keys(formDataTable).length > 0) {
+          renderTable(formDataTable); // Отрисовываем таблицу при загрузке страницы
+        }
+      });
+
+      function deleteValue(id) {
+        const storedPassword = localStorage.getItem("userPassword"); // Получаем пароль из localStorage
+        if (!storedPassword) {
+          alert("Пароль не найден!");
+          return;
+        }
+
+        axios
+          .delete(
+            `http://25.43.232.156:8080/people/${storedPassword}/measures/${id}`
+          )
+          .then((response) => {
+            alert("Значение успешно удалено!");
+            // Обновляем данные из сервера и перерисовываем таблицу
+            axios
+              .get(
+                `http://25.43.232.156:8080/people/${storedPassword}/measures`
+              )
+              .then((response) => {
+                localStorage.setItem("formData", JSON.stringify(response.data)); // Сохраняем новые данные
+                renderTable(response.data); // Перерисовываем таблицу
+              })
+              .catch((error) => {
+                console.error("Ошибка при получении данных:", error);
+              });
+          })
+          .catch((error) => {
+            console.error("Ошибка при удалении значения:", error);
+            alert("Не удалось удалить значение. Попробуйте снова.");
+          });
+      }
+
+      document
+        .getElementById("formDateAnalysis")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          const regDateAnaliz = document.getElementById("dateAnaliz").value;
+          const storedPassword = localStorage.getItem("userPassword");
+
+          console.log(regDateAnaliz);
+          axios
+            .get(
+              `http://25.43.232.156:8080/people/${storedPassword}/measures/decrypt?date=${regDateAnaliz}`
+            )
+            .then((response) => {
+              localStorage.setItem("decoding", JSON.stringify(response.data)); // Сохраняем данные как строку
+              console.log("Расшифровка", response.data);
+              createAnalis(response.data); // Передаем данные напрямую в функцию
+              
+            })
+            .catch((error) => {
+              console.error("Ошибка при получении данных:", error);
+            });
+        });
+
+      function createAnalis(data) {
+        // Если данные переданы напрямую, используем их
+        // Если нет, берем из localStorage и парсим
+        const decodingAnal = data
+          ? data
+          : JSON.parse(localStorage.getItem("decoding"));
+
+        if (!decodingAnal) {
+          console.error("Ошибка: нет данных в localStorage");
+          return;
+        }
+
+        const labels = Object.keys(decodingAnal);
+        const values = Object.values(decodingAnal).map((value) => value * 100);
+
+        // Генерация динамических цветов
+        const backgroundColors = generateColors(values.length);
+
+        const ctx = document.getElementById("pieChart").getContext("2d");
+
+        // Убедимся, что предыдущий график уничтожен, если он существует
+        if (window.myPieChart) {
+          window.myPieChart.destroy();
+        }
+
+        window.myPieChart = new Chart(ctx, {
+          type: "pie",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                data: values,
+                backgroundColor: backgroundColors, // Используем динамически сгенерированные цвета
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "right",
+              },
+            },
+          },
+        });
+      }
+
+      // Функция для генерации динамических цветов
+      function generateColors(numColors) {
+        const colors = [];
+        for (let i = 0; i < numColors; i++) {
+          const color = `hsl(${Math.floor((i * 360) / numColors)}, 70%, 50%)`; // Генерация HSL-цветов
+          colors.push(color);
+        }
+        return colors;
+      }
+    </script>
+    <script src="/welcom-back.js"></script>
+  </body>
+</html>

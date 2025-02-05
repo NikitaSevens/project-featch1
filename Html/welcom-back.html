@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/Css/reset.css">
+  <link rel="stylesheet" href="/Css/fonts.css">
+  <link rel="stylesheet" href="/Css/style.css">
+  <title>Project-featch</title>
+</head>
+<body>
+  <secion class="container">
+    <header >Welcome back</header>
+    <fieldset class="snow-toggle">
+      <label class="snow-toggle__item">
+        <input class="snow-toggle__control" type="radio" name="snow" value="snowfall" checked>
+        <span class="snow-toggle__text"></span>
+      </label>
+      <label class="snow-toggle__item">
+        <input class="snow-toggle__control" type="radio" name="snow" value="none">
+        <span class="snow-toggle__text"></span>
+      </label>
+    </fieldset>
+    <form action="#" class="personForm"  id="personFormRegistration" >
+      <div class="input-box">
+        <label>ID</label>
+        <input type="password" id="password" placeholder="Enter ID" required >
+      </div>
+      <button onclick="redirectToWelcomPage()" type="submit"> Get Started</button>
+      <p class="exit">Not registered yet?  <a href="/Html/index.html" style="opacity: 1;">Registration</a></p>
+    </form>
+  </secion>
+  <div class="snow">
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+    <div class="snow__flake">﹡</div>
+  </div>
+  <script src="/welcom-back.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
+  <script>
+    const storageKey = 'snow'
+const snow = document.querySelector('.snow')
+const snowflakes = document.querySelectorAll('.snow__flake')
+const snowToggle = document.querySelector('.snow-toggle')
+
+function getRndInteger(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) ) + min
+}
+
+function getRndFloat(min, max) {
+  return (Math.random() * (max - min) + min).toFixed(1)
+}
+
+snowflakes.forEach(snowflake => {
+  snowflake.style.fontSize = getRndFloat(0.7, 1.5) + 'em'
+  snowflake.style.animationDuration = getRndInteger(20, 30) + 's'
+  snowflake.style.animationDelay = getRndInteger(-1, snowflakes.length / 2) + 's'
+})
+
+function changeSnowAnimation(animationName) {
+  snow.style.setProperty('--animation-name',  animationName)
+}
+
+snowToggle.addEventListener('change', event => {
+  changeSnowAnimation(event.target.value)
+  localStorage.setItem(storageKey, event.target.value)
+})
+
+document.addEventListener('DOMContentLoaded', () => {
+  let currentStorage = localStorage.getItem(storageKey)
+
+  if (currentStorage) {
+    snowToggle.querySelector(`.snow-toggle__control[value='${currentStorage}']`).checked = true
+  }
+
+  changeSnowAnimation(currentStorage)
+
+  window.addEventListener('storage', () => {
+    changeSnowAnimation(localStorage.getItem(storageKey))
+  })
+})
+  </script>
+  
+</body>
+</html>
